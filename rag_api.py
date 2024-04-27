@@ -1,6 +1,8 @@
 import os
-
+from typing import List
 from fastapi import FastAPI
+from pydantic import BaseModel
+
 from langchain_openai import OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 
@@ -12,10 +14,22 @@ vectorstore = PineconeVectorStore(index_name="cmb-rag-demo",
 
 app = FastAPI(title="CMB RAG Demo", description="Demo for CMB RAG", version="0.1.0")
 
+class Message(BaseModel):
+    role: str
+    content: str
 
-@app.get("/scenarios")
-def read_item(query: str, k: int = 3):
-    return vectorstore.similarity_search(query, k=k)
+
+class Messages(BaseModel):
+    messages: List[Message]
+
+
+# @app.post("/api/agent/api-market", response_class=PlainTextResponse)
+# def mock_market(messages: Messages):
+#     return """
+
+@app.post("/scenarios")
+def read_item(body: Messages):
+    return vectorstore.similarity_search(query=body.messages[0].content, k=3)
 
 
 if __name__ == "__main__":
